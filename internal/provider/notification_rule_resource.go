@@ -185,8 +185,9 @@ func (r *notificationRuleResource) Create(ctx context.Context, req resource.Crea
 		})
 	} else {
 		ruleRes, err = r.client.Notification.CreateRule(ctx, dtrack.NotificationRule{
-			Name:  plan.Name.ValueString(),
-			Scope: dtrack.NotificationRuleScope(plan.Scope.ValueString()),
+			Name:        plan.Name.ValueString(),
+			Scope:       dtrack.NotificationRuleScope(plan.Scope.ValueString()),
+			TriggerType: triggerType,
 			Publisher: dtrack.NotificationPublisher{
 				UUID: publisherUUID,
 			},
