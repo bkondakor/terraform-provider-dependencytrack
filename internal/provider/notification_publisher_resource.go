@@ -154,10 +154,7 @@ func (r *notificationPublisherResource) Read(ctx context.Context, req resource.R
 
 	publisher, err := r.findPublisher(ctx, publisherID)
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to read notification publisher",
-			"Error from: "+err.Error(),
-		)
+		resp.State.RemoveResource(ctx)
 		return
 	}
 

@@ -272,10 +272,7 @@ func (r *notificationRuleResource) Read(ctx context.Context, req resource.ReadRe
 
 	rule, err := r.findRule(ctx, ruleID)
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to read notification rule",
-			"Error from: "+err.Error(),
-		)
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
