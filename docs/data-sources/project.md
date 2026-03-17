@@ -3,19 +3,26 @@
 page_title: "dependencytrack_project Data Source - dependencytrack"
 subcategory: ""
 description: |-
-  Fetch an existing Project by name and version. Requires the project to have a version defined on DependencyTrack.
+  Fetch an existing Project by name and version, or by name with is_latest set to true.
 ---
 
 # dependencytrack_project (Data Source)
 
-Fetch an existing Project by name and version. Requires the project to have a version defined on DependencyTrack.
+Fetch an existing Project by name and version, or by name with is_latest set to true.
 
 ## Example Usage
 
 ```terraform
+# Lookup by name and version
 data "dependencytrack_project" "example" {
   name    = "Example"
   version = "v1"
+}
+
+# Lookup the latest version (API 4.12+)
+data "dependencytrack_project" "latest" {
+  name      = "Example"
+  is_latest = true
 }
 ```
 
@@ -25,12 +32,12 @@ data "dependencytrack_project" "example" {
 ### Required
 
 - `name` (String) Name of the project to find.
-- `version` (String) Version of the project to find.
 
 ### Optional
 
-- `is_latest` (Boolean) Whether the project is the latest version. Available in API 4.12+.
+- `is_latest` (Boolean) Whether the project is the latest version. When true, version is optional and the latest project version will be returned. Available in API 4.12+.
 - `parent` (String) UUID of a parent project, if nested.
+- `version` (String) Version of the project to find. Optional when is_latest is true.
 
 ### Read-Only
 

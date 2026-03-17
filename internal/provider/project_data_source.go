@@ -57,18 +57,19 @@ func (*projectDataSource) Metadata(_ context.Context, req datasource.MetadataReq
 
 func (*projectDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Fetch an existing Project by name and version. Requires the project to have a version defined on DependencyTrack.",
+		Description: "Fetch an existing Project by name and version, or by name with is_latest set to true.",
 		Attributes: map[string]schema.Attribute{
 			"name": schema.StringAttribute{
 				Description: "Name of the project to find.",
 				Required:    true,
 			},
 			"version": schema.StringAttribute{
-				Description: "Version of the project to find.",
-				Required:    true,
+				Description: "Version of the project to find. Optional when is_latest is true.",
+				Optional:    true,
+				Computed:    true,
 			},
 			"is_latest": schema.BoolAttribute{
-				Description: "Whether the project is the latest version. Available in API 4.12+.",
+				Description: "Whether the project is the latest version. When true, version is optional and the latest project version will be returned. Available in API 4.12+.",
 				Optional:    true,
 				Computed:    true,
 			},
@@ -145,11 +146,29 @@ func (d *projectDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	isLatest := state.IsLatest.ValueBool()
+	name := state.Name.ValueString()
+
 	tflog.Debug(ctx, "Reading Project", map[string]any{
-		"name":    state.Name.ValueString(),
-		"version": state.Version.ValueString(),
+		"name":      name,
+		"version":   state.Version.ValueString(),
+		"is_latest": isLatest,
 	})
-	project, err := d.client.Project.Lookup(ctx, state.Name.ValueString(), state.Version.ValueString())
+
+	var project dtrack.Project
+	var err error
+
+	if isLatest && (state.Version.IsNull() || state.Version.IsUnknown()) {
+		project, err = d.client.Project.Latest(ctx, name)
+	} else if !state.Version.IsNull() && !state.Version.IsUnknown() {
+		project, err = d.client.Project.Lookup(ctx, name, state.Version.ValueString())
+	} else {
+		resp.Diagnostics.AddError(
+			"Invalid configuration",
+			"Either 'version' must be provided, or 'is_latest' must be set to true.",
+		)
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to read Project",
