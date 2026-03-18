@@ -192,6 +192,7 @@ func (r *notificationRuleResource) Create(ctx context.Context, req resource.Crea
 
 	// Update the rule with all the remaining fields that Create doesn't support.
 	updateReq := ruleRes
+	updateReq.TriggerType = triggerType
 	updateReq.Name = plan.Name.ValueString()
 	updateReq.Enabled = plan.Enabled.ValueBool()
 	updateReq.NotifyChildren = plan.NotifyChildren.ValueBool()
