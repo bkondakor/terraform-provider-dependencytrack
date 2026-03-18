@@ -392,6 +392,41 @@ func (r *notificationRuleResource) Delete(ctx context.Context, req resource.Dele
 		"name": state.Name.ValueString(),
 	})
 
+	// Remove all associations before deleting to avoid server-side errors.
+	rule, findErr := r.findRule(ctx, ruleID)
+	if findErr == nil {
+		for _, project := range rule.Projects {
+			_, err := r.client.Notification.RemoveProjectFromRule(ctx, ruleID, project.UUID)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Unable to remove project from notification rule before deletion",
+					"Error from: "+err.Error(),
+				)
+				return
+			}
+		}
+		for _, team := range rule.Teams {
+			_, err := r.client.Notification.RemoveTeamFromRule(ctx, ruleID, team.UUID)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Unable to remove team from notification rule before deletion",
+					"Error from: "+err.Error(),
+				)
+				return
+			}
+		}
+		for _, tag := range rule.Tags {
+			err := r.client.Tag.UntagNotificationRules(ctx, tag.Name, []uuid.UUID{ruleID})
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Unable to remove tag from notification rule before deletion",
+					"Error from: "+err.Error(),
+				)
+				return
+			}
+		}
+	}
+
 	err := r.client.Notification.DeleteRule(ctx, dtrack.NotificationRule{UUID: ruleID})
 	if err != nil {
 		resp.Diagnostics.AddError(
