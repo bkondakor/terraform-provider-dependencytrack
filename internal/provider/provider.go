@@ -234,6 +234,11 @@ func (*dependencyTrackProvider) Resources(_ context.Context) []func() resource.R
 		NewUserResource,
 		NewUserTeamResource,
 		NewUserPermissionResource,
+		NewNotificationRuleResource,
+		NewNotificationRuleProjectResource,
+		NewNotificationRuleTeamResource,
+		NewNotificationRuleTagResource,
+		NewNotificationPublisherResource,
 	}
 }
 
@@ -244,6 +249,7 @@ func (*dependencyTrackProvider) DataSources(_ context.Context) []func() datasour
 		NewTeamDataSource,
 		NewConfigPropertyDataSource,
 		NewComponentsDataSource,
+		NewNotificationPublisherDataSource,
 	}
 }
 
