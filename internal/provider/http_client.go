@@ -19,7 +19,8 @@ const (
 )
 
 var (
-	projectPropertyURLRegex = regexp.MustCompile("^/api/v1/project/" + uuidRegex + "/property$")
+	projectPropertyURLRegex    = regexp.MustCompile("^/api/v1/project/" + uuidRegex + "/property$")
+	notificationRuleURLPattern = "/api/v1/notification/rule"
 )
 
 type (
@@ -55,6 +56,24 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			return nil, err
 		}
 		req.Body = io.NopCloser(bodyBuf)
+	}
+	// The DependencyTrack API rejects updates that include triggerType
+	// ("Trigger type can not be changed"), even if the value hasn't changed.
+	// Strip it from notification rule update (POST) requests.
+	if req.URL.Path == notificationRuleURLPattern && req.Method == http.MethodPost {
+		var body map[string]json.RawMessage
+		err := json.NewDecoder(req.Body).Decode(&body)
+		if err != nil {
+			return nil, err
+		}
+		delete(body, "triggerType")
+		bodyBuf := new(bytes.Buffer)
+		err = json.NewEncoder(bodyBuf).Encode(body)
+		if err != nil {
+			return nil, err
+		}
+		req.Body = io.NopCloser(bodyBuf)
+		req.ContentLength = int64(bodyBuf.Len())
 	}
 	// End patching.
 	return t.inner.RoundTrip(req)
