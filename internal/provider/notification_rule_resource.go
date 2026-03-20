@@ -175,9 +175,14 @@ func (r *notificationRuleResource) Create(ctx context.Context, req resource.Crea
 	var err error
 
 	if triggerType == dtrack.NotificationRuleTriggerTypeSchedule {
+		notificationLevel := dtrack.NotificationRuleLevelInformational
+		if !plan.NotificationLevel.IsNull() && !plan.NotificationLevel.IsUnknown() {
+			notificationLevel = dtrack.NotificationRuleLevel(plan.NotificationLevel.ValueString())
+		}
 		ruleRes, err = r.client.Notification.CreateScheduledRule(ctx, dtrack.CreateScheduledNotificationRuleRequest{
-			Name:  plan.Name.ValueString(),
-			Scope: dtrack.NotificationRuleScope(plan.Scope.ValueString()),
+			Name:             plan.Name.ValueString(),
+			Scope:            dtrack.NotificationRuleScope(plan.Scope.ValueString()),
+			NotificatonLevel: notificationLevel,
 			Publisher: dtrack.NotificationPublisher{
 				UUID: publisherUUID,
 			},
