@@ -174,14 +174,24 @@ func (r *notificationRuleResource) Create(ctx context.Context, req resource.Crea
 	var ruleRes dtrack.NotificationRule
 	var err error
 
-	ruleRes, err = r.client.Notification.CreateRule(ctx, dtrack.NotificationRule{
-		Name:        plan.Name.ValueString(),
-		Scope:       dtrack.NotificationRuleScope(plan.Scope.ValueString()),
-		TriggerType: triggerType,
-		Publisher: dtrack.NotificationPublisher{
-			UUID: publisherUUID,
-		},
-	})
+	if triggerType == dtrack.NotificationRuleTriggerTypeSchedule {
+		ruleRes, err = r.client.Notification.CreateScheduledRule(ctx, dtrack.CreateScheduledNotificationRuleRequest{
+			Name:  plan.Name.ValueString(),
+			Scope: dtrack.NotificationRuleScope(plan.Scope.ValueString()),
+			Publisher: dtrack.NotificationPublisher{
+				UUID: publisherUUID,
+			},
+		})
+	} else {
+		ruleRes, err = r.client.Notification.CreateRule(ctx, dtrack.NotificationRule{
+			Name:        plan.Name.ValueString(),
+			Scope:       dtrack.NotificationRuleScope(plan.Scope.ValueString()),
+			TriggerType: triggerType,
+			Publisher: dtrack.NotificationPublisher{
+				UUID: publisherUUID,
+			},
+		})
+	}
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating notification rule",
